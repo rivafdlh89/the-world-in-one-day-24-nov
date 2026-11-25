@@ -46,7 +46,7 @@ function main(): void {
   const written = readFileSync(target);
   verifyEntry(written, image);
   console.log(
-    `entry.png OK: ${EXPECTED_WIDTH}x${EXPECTED_HEIGHT}, ${written.length} bytes, sha256 ${sha256Hex(written)}`,
+    `v2 entry.png OK: ${EXPECTED_WIDTH}x${EXPECTED_HEIGHT}, ${written.length} bytes, sha256 ${sha256Hex(written)}`,
   );
 }
 
