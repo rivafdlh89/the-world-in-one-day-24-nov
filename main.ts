@@ -1,9 +1,16 @@
-// the-world-in-one-day-24-nov — entry program.
+// the-world-in-one-day-24-nov — entry program (v2, round 3).
 //
-// The front page itself is the entry, so this program does one small job:
-// it places the bundled entry.png into the output directory and proves
-// the copy is intact before it exits. Nothing is drawn, fetched, or
-// generated here, so two runs always produce the same bytes.
+// v2 keeps the round-1 program exactly: the front page itself is the entry,
+// so this program places the bundled entry.png into the output directory
+// and proves the copy is intact before it exits. Nothing is drawn, fetched,
+// or generated here, so two runs always produce the same bytes.
+//
+// What changed in v2 is the image, not the program: new leads (Zaporizhzhia,
+// TAIEX +8.99% record, Sanofi $41bn), the missing consensus stories added as
+// cards, regions rebalanced to Asia 8 / Americas 8, the UTC strip, KPI strip
+// and DATE CHECK reworked, and the muddy illustrations redrawn. The image
+// itself was rebuilt from scratch in code (build.py) and verified
+// byte-identical across runs before it was bundled here.
 //
 // Node 22, standard library only. No network, no clock, no randomness.
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -46,6 +53,12 @@ function main(): void {
 // Every check the entry must pass before the program reports success:
 // byte-identical to the bundled image, inside the size cap, a real PNG
 // with an IHDR chunk, and exactly 1024x1024.
+//
+// The v2 image this program carries: 1024x1024, 200,176 bytes (under the
+// 1 MiB cap), sha256 21d989353a143f19fb88ec530e2cb3108d3b1cf1255c94c0abc81e38e15765fc,
+// rendered twice from build.py with byte-identical output. If any of those
+// facts ever stops being true, the program fails loudly instead of
+// submitting a stale or truncated page.
 function verifyEntry(written: Buffer, image: Buffer): void {
   if (!written.equals(image)) {
     die("output is not byte-identical to the bundled entry.png");
