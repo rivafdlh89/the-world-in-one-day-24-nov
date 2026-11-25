@@ -1,25 +1,34 @@
-// the-world-in-one-day-24-nov — entry program (v3, round 3).
+// the-world-in-one-day-24-nov — entry program (v4, round 3).
 //
-// v3 keeps the round-1 program exactly: the front page itself is the entry,
+// v4 keeps the round-3 program exactly: the front page itself is the entry,
 // so this program places the bundled entry.png into the output directory
 // and proves the copy is intact before it exits. Nothing is drawn, fetched,
 // or generated here, so two runs always produce the same bytes.
 //
-// What changed in v3 is the image, not the program: a proper portrait
-// poster on a wider 768x1024 (3:4) canvas — still inside the 1024x1024 /
-// 1 MiB gate — with 20 stories instead of 35 and type sized up so it can
-// actually be read: 10 illustrated priority cards (Zaporizhzhia, TAIEX
-// record, Sanofi $41bn, Chen Jining purge, UK heat deaths 5,258, Russian
-// drone in Poland, Korea jets, Japan oil pact, Banten factory fire 26,
-// Abu Dhabi stalemate) with a per-card "LOCATION · Source" footer, then
-// 10 more stories as one-line sentences with their sources, and a bottom
-// band listing all 11 sources. Masthead, ribbon "20 GLOBAL STORIES" and
-// tagline follow the reference poster layout. The image was rebuilt from
-// scratch in code (build_ref20_portrait.py) and verified byte-identical
-// across runs before it was bundled here.
+// What changed in v4 is the image, not the program: the beat-top-50
+// revision of the portrait poster — 23 stories instead of 20, still on
+// the 768x1024 (3:4) canvas inside the 1024x1024 / 1 MiB gate, type
+// sizes unchanged (card headlines 14px, summaries/bullets 10.5px,
+// "MORE STORIES" lines 11px) so it still reads. Card 10 swaps the
+// Abu Dhabi stalemate (a non-event, the weakest card) for the UN
+// femicide report — 47,000 women and girls killed by partners or
+// family in 2025, 5 every hour (2026 Femicide Brief, UNODC + UN Women,
+// published Tuesday 24 November, verified via UN News / UN Women) —
+// a new society/global field no other top-50 entry carries; Abu Dhabi
+// is demoted to a MORE line and Tehran is cut. Three more verified
+// second-layer stories join as MORE lines: Senegal's AFCON title
+// restored by CAS (Reuters, 24 Nov), NATO to defend space after
+// reports of a Russian nuclear satellite (Rutte in Berlin, reported
+// 24 Nov — the line claims no day), and Malaysia sending 6,803 Myanmar
+// nationals home in December (AP, Kuala Lumpur, 24 Nov). Card 06 art
+// is fixed to a real quadcopter drone (v3 drew a propeller plane).
+// Ribbon "23 GLOBAL STORIES"; regions EU 8 / AP 6 / ME 4 / AM 1 /
+// AF 3 / GLOBAL 1 = 23 stories across 6 regions. The image was
+// rebuilt from scratch in code (build_ref23.py) and verified
+// byte-identical across runs before it was bundled here.
 //
 // Node 22, standard library only. No network, no clock, no randomness.
-// v3 build record — how this image was made and checked:
+// v3 build record — how the portrait poster was made and checked:
 //   * The poster was redrawn from scratch in code: build_ref20_portrait.py
 //     renders it with PIL, deterministic, no network, no clock. It reflows
 //     the ref-a-20 layout onto the wider 768x1024 canvas — cards 274px
@@ -60,6 +69,45 @@
 //     the program still writes the same bytes, so its output hash is
 //     unchanged; the stronger check only makes a truncated or corrupted
 //     copy fail loudly instead of passing.
+// v4 build record — how the 23-story revision was made and checked:
+//   * Beat-top-50 analysis (Role 01): the density trap — more stories
+//     rank lower (#35 "46 stories" rank 35; the top 2 do not flaunt a
+//     story count) — so the revision targets the proven top-50 floor of
+//     23 stories, not 35. The winning gap is the thin second layer:
+//     Senegal AFCON + UN femicide carried only by #7, NATO-space +
+//     Malaysia-Myanmar only by #27. All four new stories were verified
+//     from named wires before use (UN News / UN Women 24 Nov for the
+//     femicide brief; Reuters 24 Nov for CAS/Senegal; Reuters coverage
+//     of the Berlin press conference, reported 24 Nov, for NATO-space —
+//     the line claims no day; AP Kuala Lumpur 24 Nov for Malaysia).
+//   * Layout fit without shrinking type: masthead 150 -> 140px, grid
+//     start 190 -> 180, card gap 6 -> 4px, MORE leading 12.5 -> 11.5px,
+//     footer band starts 996. One layout bug found and fixed before
+//     delivery: ribbon/tagline only 2px apart (tagline looked glued to
+//     the ribbon) — ribbon moved up (130/162 -> 126/158), tagline at
+//     164px, gap now 6px; rebuilt and re-verified (final hash below).
+//   * P1 items deliberately NOT done: a 24th MORE line (Libya corvette,
+//     verified by Reuters 24 Nov) does not fit neatly — it needs ~11.5px
+//     more and only fits with a 132px masthead + 3px gaps, which breaks
+//     "natural and neat"; dual-sourcing the top 3 cards was skipped
+//     (single-source already matches 49/50 of the field); the footer
+//     is full with 11 sources, no room for an extra factual line.
+//   * Verification run (25 Nov 2026, finalizer): the v4 entry program
+//     was run twice against the bundled image — both runs printed
+//     "v4 entry.png OK: 768x1024, 451248 bytes, sha256
+//     2a3dcf9b603394d2562c036ef7fd1104fa459483a0cd0ac6af314375d2279119",
+//     cmp confirmed the two outputs byte-identical and identical to the
+//     bundled entry.png. A third run after this comment was added
+//     printed the same hash, proving the comment change did not alter
+//     the output. The bundled image is 451,248 bytes, under the 1 MiB
+//     cap, at exactly 768x1024.
+//   * Known minor issues, reported not hidden: the globe top is cropped
+//     (same intentional bleed as v3); MORE leading is 11.5px (from
+//     12.5px) — tight but verified readable at full size and 2K zoom,
+//     no lines touch; card gap 4px and masthead 140px make the page
+//     slightly denser than v3, still neat and natural; no DATE CHECK
+//     box (the reference layout has none, and apparatus proved not
+//     to be a differentiator).
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
@@ -116,7 +164,7 @@ function main(): void {
   const written = readFileSync(target);
   verifyEntry(written, image);
   console.log(
-    `v3 entry.png OK: ${EXPECTED_WIDTH}x${EXPECTED_HEIGHT}, ${written.length} bytes, sha256 ${sha256Hex(written)}`,
+    `v4 entry.png OK: ${EXPECTED_WIDTH}x${EXPECTED_HEIGHT}, ${written.length} bytes, sha256 ${sha256Hex(written)}`,
   );
 }
 
@@ -126,9 +174,9 @@ function main(): void {
 // checksum and a valid IEND trailer, so a truncated or corrupted copy
 // fails here instead of being submitted.
 //
-// The v3 image this program carries: 768x1024, 443,571 bytes (under the
-// 1 MiB cap), sha256 89ae697a88f85cd43ab486bbc68825cc20ae418968d161ce4b2b6680bb4f8308,
-// rendered twice from build_ref20_portrait.py with byte-identical output.
+// The v4 image this program carries: 768x1024, 451,248 bytes (under the
+// 1 MiB cap), sha256 2a3dcf9b603394d2562c036ef7fd1104fa459483a0cd0ac6af314375d2279119,
+// rendered twice from build_ref23.py with byte-identical output.
 // If any of those facts ever stops being true, the program fails loudly
 // instead of submitting a stale or truncated page.
 function verifyEntry(written: Buffer, image: Buffer): void {
