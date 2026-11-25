@@ -51,6 +51,15 @@
 //     scrim), card 06 art is a propeller plane rather than a drone (text
 //     is correct), and there is no DATE CHECK box (the reference layout
 //     has none either).
+//   * Revision after kit check (thinking_revised): the entry self-check
+//     was hardened — verifyEntry now also verifies the PNG trailer and
+//     the IHDR checksum. The last 12 bytes must be a valid IEND chunk
+//     (length 0, type "IEND", fixed CRC 0xAE426082), and the stored IHDR
+//     CRC must match a CRC-32 computed over "IHDR" plus its 13 data
+//     bytes (standard table, no dependency). The image is untouched —
+//     the program still writes the same bytes, so its output hash is
+//     unchanged; the stronger check only makes a truncated or corrupted
+//     copy fail loudly instead of passing.
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
@@ -69,6 +78,29 @@ function die(message: string): never {
 
 function sha256Hex(bytes: Buffer): string {
   return createHash("sha256").update(bytes).digest("hex");
+}
+
+// CRC-32 (ISO 3309, the checksum PNG uses for every chunk): polynomial
+// 0xEDB88320, reflected. Standard table, computed once at load; no
+// dependency, so the program stays standard-library-only.
+const CRC32_TABLE: number[] = (() => {
+  const table: number[] = [];
+  for (let n = 0; n < 256; n++) {
+    let c = n;
+    for (let k = 0; k < 8; k++) {
+      c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+    }
+    table[n] = c >>> 0;
+  }
+  return table;
+})();
+
+function crc32(bytes: Buffer): number {
+  let crc = 0xffffffff;
+  for (const byte of bytes) {
+    crc = CRC32_TABLE[(crc ^ byte) & 0xff] ^ (crc >>> 8);
+  }
+  return (crc ^ 0xffffffff) >>> 0;
 }
 
 function main(): void {
@@ -90,7 +122,9 @@ function main(): void {
 
 // Every check the entry must pass before the program reports success:
 // byte-identical to the bundled image, inside the size cap, a real PNG
-// with an IHDR chunk, and exactly 768x1024.
+// with an IHDR chunk, and exactly 768x1024 — plus a verified IHDR
+// checksum and a valid IEND trailer, so a truncated or corrupted copy
+// fails here instead of being submitted.
 //
 // The v3 image this program carries: 768x1024, 443,571 bytes (under the
 // 1 MiB cap), sha256 89ae697a88f85cd43ab486bbc68825cc20ae418968d161ce4b2b6680bb4f8308,
@@ -119,6 +153,25 @@ function verifyEntry(written: Buffer, image: Buffer): void {
   const height = written.readUInt32BE(20);
   if (width !== EXPECTED_WIDTH || height !== EXPECTED_HEIGHT) {
     die(`entry.png is ${width}x${height}, expected 768x1024`);
+  }
+  // The IHDR chunk's stored CRC (bytes 29-32) must match a CRC-32
+  // computed over the chunk type "IHDR" plus its 13 data bytes
+  // (bytes 12-28). A mismatch means the header was corrupted.
+  const ihdrStoredCrc = written.readUInt32BE(29);
+  const ihdrComputedCrc = crc32(written.subarray(12, 29));
+  if (ihdrStoredCrc !== ihdrComputedCrc) {
+    die("IHDR chunk CRC mismatch — entry.png header is corrupted");
+  }
+  // The file must end with a valid IEND chunk: length 0, type "IEND",
+  // and the fixed CRC 0xAE426082 for the four type bytes alone.
+  // A missing or damaged trailer means the image was truncated.
+  const end = written.length;
+  if (
+    written.readUInt32BE(end - 12) !== 0 ||
+    written.toString("ascii", end - 8, end - 4) !== "IEND" ||
+    written.readUInt32BE(end - 4) !== 0xae426082
+  ) {
+    die("entry.png has no valid IEND trailer — image may be truncated");
   }
 }
 
