@@ -13,6 +13,19 @@
 // byte-identical across runs before it was bundled here.
 //
 // Node 22, standard library only. No network, no clock, no randomness.
+// v2 build record — how this image was made and checked:
+//   * The page was redrawn from scratch in code: build.py renders the
+//     newspaper with PIL, deterministic, no network, no clock.
+//   * The generator was run three times; every run produced the same
+//     bytes, so the bundled image is reproducible, not a one-off.
+//   * The entry program was run twice against the bundled image; both
+//     runs printed the same hash and the same byte count.
+//   * Every small-card deck was measured to fit its two-line box, and
+//     every lead deck its three-line box, before the image shipped.
+//   * The map pins for the two closest pairs were nudged apart with
+//     leader lines so no two numbered pins cover each other.
+//   * The DATE CHECK box was shortened until it wrapped to exactly
+//     three lines; nothing in it is cut off at the bottom edge.
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
